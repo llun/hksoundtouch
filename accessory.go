@@ -3,6 +3,7 @@ package soundtouch
 import (
   "fmt"
   "log"
+  "net"
 
   "github.com/brutella/hc/accessory"
   "github.com/brutella/hc/characteristic"
