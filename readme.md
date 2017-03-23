@@ -9,15 +9,28 @@ package main
 
 import (
   "github.com/brutella/hc"
+  "github.com/brutella/hc/accessory"
   "github.com/llun/hksoundtouch"
 )
 
+func getSoundTouchAccessories() []*accessory.Accessory {
+  services := soundtouch.Lookup()
+
+  accessories := make([]*accessory.Accessory, len(services))
+  for idx, service := range services {
+    accessories[idx] = service.Accessory
+  }
+
+  return accessories
+}
+
 func main() {
-  soundtouch := soundtouch.NewAccessory()
+  accessories := getSoundTouchAccessories()
+
   t, err := hc.NewIPTransport(hc.Config{
     Pin:  "32191123",
     Port: "51827",
-  }, soundtouch.Accessory)
+  }, accessories[0], accessories[1:]...)
   if err != nil {
     log.Fatal(err)
   }

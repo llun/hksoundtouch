@@ -2,6 +2,7 @@ package soundtouch
 
 import (
   "fmt"
+  "log"
 
   "github.com/brutella/hc/accessory"
   "github.com/brutella/hc/characteristic"
@@ -10,8 +11,6 @@ import (
 )
 
 const BASE_TYPE = "00074"
-
-var speakerCh chan *soundtouch.Speaker = nil
 
 type SoundTouch struct {
   *accessory.Accessory
@@ -30,16 +29,20 @@ type SoundTouch struct {
   SoundTouch *soundtouch.Speaker
 }
 
-func Lookup() {
-
+func Lookup() []*SoundTouch {
+  var services []*SoundTouch
+  speakerCh := soundtouch.Lookup()
+  for speaker := range speakerCh {
+    info, err := speaker.Info()
+    if err != nil {
+      log.Fatal(err)
+    }
+    services = append(services, NewSoundTouch(speaker, info.DeviceID, info.Type))
+  }
+  return services
 }
 
-func NewSoundTouch(serial string, model string) *SoundTouch {
-  if speakerCh == nil {
-    speakerCh = make(chan *soundtouch.Speaker, 1)
-    soundtouch.Lookup(speakerCh)
-  }
-
+func NewSoundTouch(speaker *soundtouch.Speaker, serial, model string) *SoundTouch {
   info := accessory.Info{
     Name:         "SoundTouch",
     Manufacturer: "Bose",
@@ -49,7 +52,7 @@ func NewSoundTouch(serial string, model string) *SoundTouch {
 
   acc := SoundTouch{}
   acc.Accessory = accessory.New(info, accessory.TypeOther)
-  acc.SoundTouch = <-speakerCh
+  acc.SoundTouch = speaker
 
   acc.Speaker = acc.createSpeakerService()
   acc.AddService(acc.Speaker.Service)
