@@ -29,9 +29,9 @@ type SoundTouch struct {
   SoundTouch *soundtouch.Speaker
 }
 
-func Lookup() []*SoundTouch {
+func Lookup(iface *net.Interface) []*SoundTouch {
   var services []*SoundTouch
-  speakerCh := soundtouch.Lookup()
+  speakerCh := soundtouch.Lookup(iface)
   for speaker := range speakerCh {
     info, err := speaker.Info()
     if err != nil {
