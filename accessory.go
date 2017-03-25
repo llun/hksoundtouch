@@ -28,6 +28,9 @@ type SoundTouch struct {
   IP      *IP
 
   SoundTouch *soundtouch.Speaker
+
+  power      bool
+  nowPlaying soundtouch.NowPlaying
 }
 
 func Lookup(iface *net.Interface) []*SoundTouch {
@@ -54,9 +57,11 @@ func NewSoundTouch(speaker *soundtouch.Speaker, serial, model string) *SoundTouc
   acc := SoundTouch{}
   acc.Accessory = accessory.New(info, accessory.TypeOther)
   acc.SoundTouch = speaker
+  acc.listen(speaker)
 
   acc.Speaker = acc.createSpeakerService()
   acc.AddService(acc.Speaker.Service)
+
   return &acc
 }
 
@@ -86,4 +91,26 @@ func (s *SoundTouch) createSpeakerService() *service.Speaker {
 
   s.setupMute(speaker.Mute, s.SoundTouch)
   return speaker
+}
+
+func (s *SoundTouch) listen(speaker *soundtouch.Speaker) {
+  go func() {
+    socket, err := speaker.Listen()
+    if err != nil {
+      log.Fatal(err)
+    }
+
+    for message := range socket {
+      value := message.Value
+      switch value := value.(type) {
+      case soundtouch.NowPlaying:
+        s.power = value.Source != soundtouch.STANDBY
+        s.Speaker.Mute.UpdateValue(!s.power)
+        if value.Source != soundtouch.STANDBY {
+          s.nowPlaying = value
+        }
+      }
+    }
+  }()
+
 }

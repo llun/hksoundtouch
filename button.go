@@ -30,7 +30,7 @@ func (s *SoundTouch) createButton(uuid, name string, value soundtouch.Key, speak
   button := NewButton(uuid, name)
   button.OnValueRemoteUpdate(func(press bool) {
     speaker.PressKey(value)
-    time.AfterFunc(5*time.Millisecond, func() {
+    time.AfterFunc(1*time.Second, func() {
       button.SetValue(false)
     })
   })

@@ -10,7 +10,9 @@ import (
 func (s *SoundTouch) setupMute(mute *characteristic.Mute, speaker *soundtouch.Speaker) {
   mute.SetValue(false)
   mute.OnValueRemoteUpdate(func(newValue bool) {
-    speaker.PressKey(soundtouch.POWER)
+    if s.power == newValue {
+      speaker.PressKey(soundtouch.POWER)
+    }
   })
 
   go func(mute *characteristic.Mute) {
@@ -24,8 +26,12 @@ func (s *SoundTouch) setupMute(mute *characteristic.Mute, speaker *soundtouch.Sp
 
     if nowPlaying.Source == soundtouch.STANDBY {
       mute.UpdateValue(true)
+      s.power = false
+      s.nowPlaying = nowPlaying
     } else {
       mute.UpdateValue(false)
+      s.power = true
+      s.nowPlaying = nowPlaying
     }
   }(mute)
 }
