@@ -109,6 +109,8 @@ func (s *SoundTouch) listen(speaker *soundtouch.Speaker) {
         if value.Source != soundtouch.STANDBY {
           s.nowPlaying = value
         }
+      case soundtouch.Volume:
+        s.Volume.UpdateValue(float64(value.ActualVolume))
       }
     }
   }()
