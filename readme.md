@@ -1,6 +1,6 @@
 # hksoundtouch
 
-SoundTouch homekit accessory for [HomeControl](https://github.com/brutella/hc)
+SoundTouch speaker for [HomeControl](https://github.com/brutella/hc)
 
 ## Sample Code for using with HC
 
