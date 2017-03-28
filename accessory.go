@@ -2,11 +2,11 @@ package soundtouch
 
 import (
   "fmt"
-  "log"
   "net"
 
   "github.com/brutella/hc/accessory"
   "github.com/brutella/hc/characteristic"
+  "github.com/brutella/hc/log"
   "github.com/brutella/hc/service"
   "github.com/llun/soundtouch-golang"
 )
@@ -39,7 +39,7 @@ func Lookup(iface *net.Interface) []*SoundTouch {
   for speaker := range speakerCh {
     info, err := speaker.Info()
     if err != nil {
-      log.Fatal(err)
+      log.Debug.Fatal(err)
     }
     services = append(services, NewSoundTouch(speaker, info.DeviceID, info.Type))
   }
@@ -97,7 +97,7 @@ func (s *SoundTouch) listen(speaker *soundtouch.Speaker) {
   go func() {
     socket, err := speaker.Listen()
     if err != nil {
-      log.Fatal(err)
+      log.Debug.Fatal(err)
     }
 
     for message := range socket {

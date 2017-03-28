@@ -1,9 +1,8 @@
 package soundtouch
 
 import (
-  "log"
-
   "github.com/brutella/hc/characteristic"
+  "github.com/brutella/hc/log"
   "github.com/llun/soundtouch-golang"
 )
 
@@ -18,11 +17,11 @@ func (s *SoundTouch) setupMute(mute *characteristic.Mute, speaker *soundtouch.Sp
   go func(mute *characteristic.Mute) {
     nowPlaying, err := speaker.NowPlaying()
     if err != nil {
-      log.Println("Cannot read speaker now-playing because of, %v", err)
+      log.Debug.Println("Cannot read speaker now-playing because of, %v", err)
       return
     }
 
-    log.Printf("%v", nowPlaying)
+    log.Debug.Printf("%v", nowPlaying)
 
     if nowPlaying.Source == soundtouch.STANDBY {
       mute.UpdateValue(true)
