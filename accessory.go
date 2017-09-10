@@ -8,6 +8,7 @@ import (
 	"github.com/brutella/hc/characteristic"
 	"github.com/brutella/hc/log"
 	"github.com/brutella/hc/service"
+	ba "github.com/llun/hkbridge/accessories"
 	"github.com/llun/soundtouch-golang"
 )
 
@@ -31,9 +32,11 @@ type SoundTouch struct {
 
 	power      bool
 	nowPlaying soundtouch.NowPlaying
+
+	worker *ba.Worker
 }
 
-func Lookup(iface *net.Interface) []*SoundTouch {
+func Lookup(iface *net.Interface, worker *ba.Worker) []*SoundTouch {
 	var services []*SoundTouch
 	speakerCh := soundtouch.Lookup(iface)
 	for speaker := range speakerCh {
@@ -41,12 +44,12 @@ func Lookup(iface *net.Interface) []*SoundTouch {
 		if err != nil {
 			log.Debug.Fatal(err)
 		}
-		services = append(services, NewSoundTouch(speaker, info.DeviceID, info.Type))
+		services = append(services, NewSoundTouch(speaker, info.DeviceID, info.Type, worker))
 	}
 	return services
 }
 
-func NewSoundTouch(speaker *soundtouch.Speaker, serial, model string) *SoundTouch {
+func NewSoundTouch(speaker *soundtouch.Speaker, serial, model string, worker *ba.Worker) *SoundTouch {
 	info := accessory.Info{
 		Name:         "SoundTouch",
 		Manufacturer: "Bose",
@@ -54,7 +57,9 @@ func NewSoundTouch(speaker *soundtouch.Speaker, serial, model string) *SoundTouc
 		Model:        model,
 	}
 
-	acc := SoundTouch{}
+	acc := SoundTouch{
+		worker: worker,
+	}
 	acc.Accessory = accessory.New(info, accessory.TypeOther)
 	acc.SoundTouch = speaker
 	acc.listen(speaker)
@@ -115,4 +120,14 @@ func (s *SoundTouch) listen(speaker *soundtouch.Speaker) {
 		}
 	}()
 
+}
+
+func AllAccessories(config ba.AccessoryConfig, iface *net.Interface, worker *ba.Worker) []*accessory.Accessory {
+	speakers := Lookup(iface, worker)
+	soundtouchAccessories := make([]*accessory.Accessory, len(speakers))
+	for idx, speaker := range speakers {
+		soundtouchAccessories[idx] = speaker.Accessory
+	}
+	log.Info.Println("Soundtouchs, %v", soundtouchAccessories)
+	return soundtouchAccessories
 }
