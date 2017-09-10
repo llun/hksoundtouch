@@ -1,8 +1,9 @@
-package soundtouch
+package hksoundtouch
 
 import (
 	"fmt"
 	"net"
+	"time"
 
 	"github.com/brutella/hc/accessory"
 	"github.com/brutella/hc/characteristic"
@@ -33,7 +34,8 @@ type SoundTouch struct {
 	power      bool
 	nowPlaying soundtouch.NowPlaying
 
-	worker *ba.Worker
+	worker    *ba.Worker
+	pollingCh <-chan time.Time
 }
 
 func Lookup(iface *net.Interface, worker *ba.Worker) []*SoundTouch {
@@ -62,12 +64,21 @@ func NewSoundTouch(speaker *soundtouch.Speaker, serial, model string, worker *ba
 	}
 	acc.Accessory = accessory.New(info, accessory.TypeOther)
 	acc.SoundTouch = speaker
-	acc.listen(speaker)
 
 	acc.Speaker = acc.createSpeakerService()
 	acc.AddService(acc.Speaker.Service)
+	go acc.PollingState()
 
 	return &acc
+}
+
+func (s *SoundTouch) PollingState() {
+	s.worker.AddAction(NewGetNowPlaying(s, s.SoundTouch))
+	s.worker.AddAction(NewGetVolume(s, s.SoundTouch))
+	for range s.pollingCh {
+		s.worker.AddAction(NewGetNowPlaying(s, s.SoundTouch))
+		s.worker.AddAction(NewGetVolume(s, s.SoundTouch))
+	}
 }
 
 func (s *SoundTouch) createSpeakerService() *service.Speaker {
@@ -96,30 +107,6 @@ func (s *SoundTouch) createSpeakerService() *service.Speaker {
 
 	s.setupMute(speaker.Mute, s.SoundTouch)
 	return speaker
-}
-
-func (s *SoundTouch) listen(speaker *soundtouch.Speaker) {
-	go func() {
-		socket, err := speaker.Listen()
-		if err != nil {
-			log.Debug.Fatal(err)
-		}
-
-		for message := range socket {
-			value := message.Value
-			switch value := value.(type) {
-			case soundtouch.NowPlaying:
-				s.power = value.Source != soundtouch.STANDBY
-				s.Speaker.Mute.UpdateValue(!s.power)
-				if value.Source != soundtouch.STANDBY {
-					s.nowPlaying = value
-				}
-			case soundtouch.Volume:
-				s.Volume.UpdateValue(float64(value.ActualVolume))
-			}
-		}
-	}()
-
 }
 
 func AllAccessories(config ba.AccessoryConfig, iface *net.Interface, worker *ba.Worker) []*accessory.Accessory {

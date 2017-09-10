@@ -1,4 +1,4 @@
-package soundtouch
+package hksoundtouch
 
 import (
 	"github.com/brutella/hc/characteristic"

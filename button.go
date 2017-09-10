@@ -1,4 +1,4 @@
-package soundtouch
+package hksoundtouch
 
 import (
 	"time"
