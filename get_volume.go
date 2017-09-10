@@ -22,7 +22,7 @@ func (a *GetVolume) Run() {
 }
 
 func (a *GetVolume) Name() string {
-	return "GetVolumn"
+	return "GetVolume"
 }
 
 func (a *GetVolume) RemoveDuplicateCommand() bool {
